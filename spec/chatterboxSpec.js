@@ -70,7 +70,6 @@ describe('chatterbox', function() {
     describe('chatroom behavior', function() {
       it('should be able to clear messages from the DOM', function() {
         var orig = $('#chats').html('<blink>OMG IT\'s 1998!</blink>');
-        // console.log($('#chats'));
         app.clearMessages();
         expect($('#chats').children().length).to.equal(0);
       });
@@ -106,8 +105,8 @@ describe('chatterbox', function() {
         });
 
         app.init();
-
         $('#main').find('.username').trigger('click');
+        console.log($('#main'))
         expect(app.handleUsernameClick.called).to.be.true;
 
         app.handleUsernameClick.restore();

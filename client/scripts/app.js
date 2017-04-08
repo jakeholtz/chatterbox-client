@@ -2,27 +2,57 @@
 document.write("Ashwin and Jake's Chatterbox");
 
 var app = {};
-  // url: 'http://parse.sfm6.hackreactor.com/2745f6eedad1770c6ebaf03f8a97cf0cc2f66706',
-  // dataType: 'JSON',
-  // headers: { "HeaderName": "4f44a6835e581124936858b658e8ea99e278d371" }
 
-app.init = function(item){ return true; };
+app.init = function(item){
+  this.handleUsernameClick();
+  this.handleSubmit();
+  return !!item; };
 app.send = function(message){
-	this.type = 'POST';
-  this.data = JSON.stringify(message);
-  
-  $.ajax(this);
+  $.ajax({
+    url: 'http://parse.sfm6.hackreactor.com/chatterbox/classes/messages',
+    type: 'POST',
+    data: JSON.stringify(message),
+    contentType: 'application/json',
+    success: function (data) {
+      console.log('chatterbox: Message sent');
+    },
+    error: function (data) {
+      console.error('chatterbox: Failed to send message', data);
+    }
+  });
 };
 
 app.fetch = function(){
-  this.type = 'GET';
-  $.ajax(this);
+  $.ajax({
+    // url: 'http://parse.sfm6.hackreactor.com/chatterbox/classes/messages',
+    type: 'GET',
+    contentType: 'application/json',
+    success: function (data) {
+      console.log('chatterbox: Message sent');
+    },
+    error: function (data) {
+      console.error('chatterbox: Failed to send message', data);
+    }
+  });
 };
 
 app.clearMessages = function(){
-   $( "#chats" ).remove();
+   $("#chats").children().remove();
 };
 
-// app.renderMessage = function(message){
-//    $( "#chats" ).append('<div>'+message+'</div>');
-// };
+app.renderMessage = function(message){
+  $('#chats').append('<div>' + JSON.stringify(message) + '</div>');
+};
+
+app.renderRoom = function(room){
+  $('#roomSelect').append('<div>' + JSON.stringify(room) + '</div>');
+};
+
+app.handleUsernameClick = function(friend){
+
+};
+
+app.handleSubmit = function(message){
+
+};
+

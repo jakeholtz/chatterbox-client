@@ -24,7 +24,7 @@ app.send = function(message){
 
 app.fetch = function(){
   $.ajax({
-    // url: 'http://parse.sfm6.hackreactor.com/chatterbox/classes/messages',
+    url: 'http://parse.sfm6.hackreactor.com/chatterbox/classes/messages',
     type: 'GET',
     contentType: 'application/json',
     success: function (data) {
@@ -41,11 +41,15 @@ app.clearMessages = function(){
 };
 
 app.renderMessage = function(message){
-  $('#chats').append('<div>' + JSON.stringify(message) + '</div>');
+  var divStart = '<div>';
+  var divEnd = '</div>';
+  $('#chats').append(divStart + JSON.stringify(message) + divEnd);
 };
 
 app.renderRoom = function(room){
-  $('#roomSelect').append('<div>' + JSON.stringify(room) + '</div>');
+  var divStart = '<div>';
+  var divEnd = '</div>';
+  $('#roomSelect').append(divStart + JSON.stringify(room) + divEnd);
 };
 
 app.handleUsernameClick = function(friend){

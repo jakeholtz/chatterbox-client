@@ -1,6 +1,3 @@
-document.write("Ashwin and Jake's Chatterbox");
-
-
 $(document).ready(function(){
   app.init();
 });
@@ -13,7 +10,8 @@ app.init = function(item){
   this.handleUsernameClick();
   this.handleSubmit();
   this.roomName = null;
-  setInterval(this.fetch().bind(this), 2000);
+  this.rooms = new Set();
+  setInterval(this.fetch(), 2000);
 };
 
 
@@ -41,6 +39,7 @@ app.fetch = function(){
     success: function (data) {
       console.log('chatterbox: Message sent');
       app.showChats(data);
+      app.getRooms(data);
     },
     error: function (data) {
       console.error('chatterbox: Failed to send message', data);
@@ -63,8 +62,21 @@ app.renderMessage = function(message){
   $chatmessage.append($text);
 };
 
+app.getRooms = function(data){
+  for (var obj in data.results) {
+    this.rooms.add(data.results[obj].roomname);
+  }
+  this.rooms = Array.from(this.rooms).sort();
+  for (var room in this.rooms){
+    $('#roomselector').append(`<option>${this.rooms[room]}</option>`);
+  }
+
+  console.log(this.rooms);
+}
 
 app.renderRoom = function(room){
+  this.roomName = room;
+  // this.fetch();
   var divStart = '<div>';
   var divEnd = '</div>';
   $('#roomSelect').append(divStart + JSON.stringify(room) + divEnd);
@@ -82,9 +94,18 @@ app.handleSubmit = function(message){
 
 
 app.showChats = function(data){
-  for (var i = 0; i < data.results.length; i++){
-    this.renderMessage(data.results[i]);
-    console.log(data.results[i]);
+  if (this.roomName === null){
+    for (var i = 0; i < data.results.length; i++){
+      this.renderMessage(data.results[i]);
+      console.log(data.results[i]);
+    }
+  } else {
+    for (var i = 0; i < data.results.length; i++){
+      if (data.results[i].roomname == this.roomName){
+        this.renderMessage(data.results[i]);
+        console.log(data.results[i]);
+      }
+    }
   }
 };
 

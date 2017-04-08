@@ -112,7 +112,7 @@ form input[type=text] {
 .chat {
     padding: 5px;
     margin-bottom: 5px;
-    background-color: #eee;
+    background-color: #DFF4FA;
 }
 
 .chat .username {
@@ -140,5 +140,8 @@ form input[type=text] {
 
 #roomselector {
     display: block;
-    margin: auto;
+}
+
+#chats {
+  background-color: #F1F9FB !important;
 }

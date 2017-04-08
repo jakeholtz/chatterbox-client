@@ -17,26 +17,32 @@
         }
         newSearch += 'username=' + (prompt('What is your name?') || 'anonymous');
         window.location.search = newSearch;
+        app.username = username;
+        console.log(app.username);
       }
     </script>
-    <!-- your scripts -->
     <script src="env/config.js"></script>
     <script src="scripts/app.js"></script>
   </head>
   <body>
     <div id="main">
       <h1>Chatterbox</h1>
-      <select id="roomselector">
+      <select id="roomselector" onchange="myFunction()">
         <option>Default</option>
       </select>
-    </div>
-    <div>
-    
-      
+
+    <script type="text/javascript">
+      function myFunction() {
+        var filterRoom = document.getElementById("roomselector").value;
+        app.renderRoom(filterRoom);
+      }
+    </script>
+      <form action="#" id="send">
+        <input type="text" name="message" id="message"/>
+        <input type="submit" name="submit" id="submit_button" class="submit"/>
+      </form>
     </div>
     <div id="chats">
-<!--       <table>
-      </table> -->
     </div>
   </body>
 </html>

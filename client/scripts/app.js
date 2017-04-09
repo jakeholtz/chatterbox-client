@@ -10,11 +10,16 @@ app.init = function(item){
   this.handleUsernameClick();
   this.roomName = null;
   this.rooms = [];
+  this.friends = [];
   app.fetch();
   setInterval(app.fetch.bind(this), 2000);
   $( "#submit_button" ).on('click', function(event) {
       event.preventDefault()
       app.handleSubmit($('#message').val());
+  });
+  $('#chats').on('click','.username', function() {
+    var userid = $("#chats").attr("data-username");
+    console.log('Clicked on username ' + userid);
   });
 };
 
@@ -43,7 +48,6 @@ app.fetch = function(){
     contentType: 'application/json',
     data: "order=-createdAt",
     success: function (data) {
-      console.log('chatterbox: Message sent');
       app.showChats(data);
       app.getRooms(data);
     },
@@ -60,7 +64,7 @@ app.clearMessages = function(){
 
 
 app.renderMessage = function(message){
-  var $username = $(`<p class="username">${message.username}</p>`);
+  var $username = $(`<p class="username" data-username="${message.username}">${message.username}</p>`);
   var $text = $(`<span class="chatmessage">${message.text}</span>`)
   var $chatmessage = $('<div class="chat"></div>');
   $('#chats').append($chatmessage);

@@ -1,139 +1,176 @@
-$(document).ready(function(){
-  app.init();
-});
+var app = {
 
+  server: 'http://parse.sfm6.hackreactor.com/chatterbox/classes/messages',
+  username: 'anonymous',
+  roomname: 'lobby',
+  lastMessageId: 0,
+  friends: {},
+  messages: [],
 
-var app = {};
+  init: function() {
+    app.username = window.location.search.substr(10);
+    app.$message = $('#message');
+    app.$chats = $('#chats');
+    app.$roomSelect = $('#roomSelect');
+    app.$send = $('#send');
+    app.$chats.on('click', '.username', app.handleUsernameClick);
+    app.$send.on('submit', app.handleSubmit);
+    app.$roomSelect.on('change', app.handleRoomChange);
 
+    app.startSpinner();
+    app.fetch(false);
 
-app.init = function(item){
-  this.handleUsernameClick();
-  this.roomName = null;
-  this.rooms = [];
-  this.friends = [];
-  app.fetch();
-  setInterval(app.fetch.bind(this), 2000);
-  $( "#submit_button" ).on('click', function(event) {
-      event.preventDefault()
-      app.handleSubmit($('#message').val());
-  });
-  $('#chats').on('click','.username', function() {
-    var userid = $("#chats").attr("data-username");
-    console.log('Clicked on username ' + userid);
-  });
-};
+    setInterval(function() {
+      app.fetch(true);
+    }, 3000);
+  },
 
+  send: function(message) {
+    app.startSpinner();
 
-app.send = function(message){
-  $.ajax({
-    url: 'http://parse.sfm6.hackreactor.com/chatterbox/classes/messages',
-    type: 'POST',
-    data: JSON.stringify(message),
-    contentType: 'application/json',
-    success: function (data) {
-      // this.data.val('');
-      // this.fetch();
-      console.log('chatterbox: Message sent');
-    },
-    error: function (data) {
-      console.error('chatterbox: Failed to send message', data);
-    }
-  });
-};
-
-app.fetch = function(){
-  $.ajax({
-    url: 'http://parse.sfm6.hackreactor.com/chatterbox/classes/messages',
-    type: 'GET',
-    contentType: 'application/json',
-    data: "order=-createdAt",
-    success: function (data) {
-      app.showChats(data);
-      app.getRooms(data);
-    },
-    error: function (data) {
-      console.error('chatterbox: Failed to send message', data);
-    }
-  });
-};
-
-
-app.clearMessages = function(){
-   $("#chats").children().remove();
-};
-
-
-app.renderMessage = function(message){
-  var $username = $(`<p class="username" data-username="${message.username}">${message.username}</p>`);
-  var $text = $(`<span class="chatmessage">${message.text}</span>`)
-  var $chatmessage = $('<div class="chat"></div>');
-  $('#chats').append($chatmessage);
-  $chatmessage.append($username);
-  $chatmessage.append($text);
-};
-
-app.getRooms = function(data){
-  for (var prop in data.results) {
-    if (!_.contains(this.rooms, data.results[prop].roomname)) {
-      this.rooms.push(data.results[prop].roomname);
-    }
-  }
-  this.rooms = Array.from(this.rooms).sort();
-  for (var room in this.rooms){
-    $('#roomselector').append(`<option value="${this.rooms[room]}">${this.rooms[room]}</option>`);
-  }
-}
-
-app.renderRoom = function(room){
-  this.roomName = room;
     $.ajax({
-    url: 'http://parse.sfm6.hackreactor.com/chatterbox/classes/messages',
-    type: 'GET',
-    contentType: 'application/json',
-    success: function (data) {
-      console.log('chatterbox: Message sent');
-      app.showChats(data);
-      app.getRooms(data);
-    },
-    error: function (data) {
-      console.error('chatterbox: Failed to send message', data);
+      url: app.server,
+      type: 'POST',
+      data: message,
+      success: function (data) {
+        app.$message.val('');
+        app.fetch();
+      },
+      error: function (error) {
+        console.error('chatterbox: Failed to send message', error);
+      }
+    });
+  },
+
+  fetch: function(animate) {
+    $.ajax({
+      url: app.server,
+      type: 'GET',
+      data: { order: '-createdAt' },
+      contentType: 'application/json',
+      success: function(data) {
+        if (!data.results || !data.results.length) { return; }
+        app.messages = data.results;
+        var mostRecentMessage = data.results[data.results.length - 1];
+        if (mostRecentMessage.objectId !== app.lastMessageId) {
+          app.renderRoomList(data.results);
+          app.renderMessages(data.results, animate);
+          app.lastMessageId = mostRecentMessage.objectId;
+        }
+      },
+      error: function(error) {
+        console.error('chatterbox: Failed to fetch messages', error);
+      }
+    });
+  },
+
+  clearMessages: function() {
+    app.$chats.html('');
+  },
+
+  renderMessages: function(messages, animate) {
+    app.clearMessages();
+    app.stopSpinner();
+    if (Array.isArray(messages)) {
+      messages
+        .filter(function(message) {
+          return message.roomname === app.roomname ||
+                 app.roomname === 'lobby' && !message.roomname;
+        })
+        .forEach(app.renderMessage);
     }
-  });
-  // this.fetch();
-  var divStart = '<div>';
-  var divEnd = '</div>';
-  $('#roomSelect').append(divStart + JSON.stringify(room) + divEnd);
-};
 
+    if (animate) {
+      $('body').animate({scrollTop: '0px'}, 'fast');
+    }
+  },
 
-app.handleUsernameClick = function(friend){
-  return true;
-};
+  renderRoomList: function(messages) {
+    app.$roomSelect.html('<option value="__newRoom">New room...</option>');
 
+    if (messages) {
+      var rooms = {};
+      messages.forEach(function(message) {
+        var roomname = message.roomname;
+        if (roomname && !rooms[roomname]) {
+          app.renderRoom(roomname);
+          rooms[roomname] = true;
+        }
+      });
+    }
+    app.$roomSelect.val(app.roomname);
+  },
 
-app.handleSubmit = function(message) {
+  renderRoom: function(roomname) {
+    var $option = $('<option/>').val(roomname).text(roomname);
+    app.$roomSelect.append($option);
+  },
+
+  renderMessage: function(message) {
+    if (!message.roomname) {
+      message.roomname = 'lobby';
+    }
+    var $chat = $('<div class="chat"/>');
+    var $username = $('<span class="username"/>');
+    $username.text(message.username + ': ').attr('data-roomname', message.roomname).attr('data-username', message.username).appendTo($chat);
+
+    if (app.friends[message.username] === true) {
+      $username.addClass('friend');
+    }
+
+    var $message = $('<br><span/>');
+    $message.text(message.text).appendTo($chat);
+
+    app.$chats.append($chat);
+
+  },
+
+  handleUsernameClick: function(event) {
+
+    var username = $(event.target).data('username');
+
+    if (username !== undefined) {
+      app.friends[username] = !app.friends[username];
+      var selector = '[data-username="' + username.replace(/"/g, '\\\"') + '"]';
+      var $usernames = $(selector).toggleClass('friend');
+    }
+  },
+
+  handleRoomChange: function(event) {
+
+    var selectIndex = app.$roomSelect.prop('selectedIndex');
+    if (selectIndex === 0) {
+      var roomname = prompt('Enter room name');
+      if (roomname) {
+        app.roomname = roomname;
+        app.renderRoom(roomname);
+        app.$roomSelect.val(roomname);
+      }
+    } else {
+      app.startSpinner();
+      app.roomname = app.$roomSelect.val();
+    }
+    app.renderMessages(app.messages);
+  },
+
+  handleSubmit: function(event) {
     var message = {
-      username: window.location.search.substr(10),
-      text: message,
-      roomname: 'lobby'
+      username: app.username,
+      text: app.$message.val(),
+      roomname: app.roomname || 'lobby'
     };
 
     app.send(message);
+    event.preventDefault();
+  },
 
-    // Stop the form from submitting
-}
+  startSpinner: function() {
+    $('.spinner img').show();
+    $('form input[type=submit]').attr('disabled', 'true');
+  },
 
-app.showChats = function(data){
-  if (this.roomName === null){
-    for (var i = 0; i < data.results.length; i++){
-      this.renderMessage(data.results[i]);
-    }
-  } else {
-    for (var i = 0; i < data.results.length; i++){
-      if (data.results[i].roomname == this.roomName){
-        this.renderMessage(data.results[i]);
-      }
-    }
+  stopSpinner: function() {
+    $('.spinner img').fadeOut('fast');
+    $('form input[type=submit]').attr('disabled', null);
   }
 };
-

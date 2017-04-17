@@ -4,12 +4,8 @@
     <meta charset="utf-8">
     <title>chatterbox</title>
     <link rel="stylesheet" href="styles/styles.css">
-
-    <!-- dependencies -->
     <script src="bower_components/jquery/dist/jquery.js"></script>
-    <script src="bower_components/underscore/underscore.js"></script>
     <script>
-      // YOU DO NOT NEED TO EDIT THIS CODE
       if (!/(&|\?)username=/.test(window.location.search)) {
         var newSearch = window.location.search;
         if (newSearch !== '' & newSearch !== '?') {
@@ -17,8 +13,6 @@
         }
         newSearch += 'username=' + (prompt('What is your name?') || 'anonymous');
         window.location.search = newSearch;
-        app.username = username;
-        console.log(app.username);
       }
     </script>
     <script src="env/config.js"></script>
@@ -26,23 +20,24 @@
   </head>
   <body>
     <div id="main">
-      <h1>Chatterbox</h1>
-      <select id="roomselector" onchange="myFunction()">
-        <option>Default</option>
-      </select>
-
-    <script type="text/javascript">
-      function myFunction() {
-        var filterRoom = document.getElementById("roomselector").value;
-        app.renderRoom(filterRoom);
-      }
-    </script>
-      <form action="#" id="send">
+      <h1>chatterbox</h1>
+      <div class="spinner"><img src="images/spiffygif_46x46.gif"></div>
+      <div id="rooms">
+        Room:
+        <select id="roomSelect">
+        </select>
+      </div>
+      <form action="#" id="send" method="post">
         <input type="text" name="message" id="message"/>
-        <input type="submit" name="submit" id="submit_button" class="submit"/>
+        <input type="submit" name="submit" class="submit"/>
       </form>
     </div>
     <div id="chats">
     </div>
+    <script>
+      $(function(){
+        app.init()
+      });
+    </script>
   </body>
 </html>
